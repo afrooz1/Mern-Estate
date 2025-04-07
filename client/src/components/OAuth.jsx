@@ -40,11 +40,7 @@ export default function OAuth() {
       type="button"
       className="w-full bg-red-600 text-white p-3 rounded-lg uppercase font-semibold hover:bg-red-700 transition duration-300 flex items-center justify-center gap-2"
     >
-      <img
-        src="https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg"
-        alt="Google Logo"
-        className="w-6 h-6"
-      />
+      
       Continue with Google
     </button>
   );
