@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
+import { getDownloadURL, ref, uploadBytesResumable } from 'firebase/storage';
+// import { storage } from '../firebase'; // Import Firebase storage
 
 export default function CreateListing() {
   const { currentUser } = useSelector((state) => state.user);
@@ -25,6 +27,31 @@ export default function CreateListing() {
   const [error, setError] = useState(false);
   const [loading, setLoading] = useState(false);
 
+  // Helper function to store image in Firebase
+const storeImage = async (file) => {
+
+  const formData = new FormData();
+
+  formData.append(
+    'image',
+    file
+  );
+
+  const res = await fetch(
+    '/api/upload',
+    {
+      method: 'POST',
+      body: formData,
+    }
+  );
+
+  const data =
+    await res.json();
+
+  return data.imageUrl;
+};
+
+  // Handle image upload to Firebase
   const handleImageSubmit = async () => {
     if (files.length === 0) {
       return setImageUploadError('Please select images to upload.');
@@ -37,28 +64,19 @@ export default function CreateListing() {
     setImageUploadError(false);
 
     try {
-      const base64Urls = await Promise.all(
-        Array.from(files).map((file) => {
-          return new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.readAsDataURL(file);
-            reader.onloadend = () => {
-              resolve(reader.result); // Resolve with Base64 string
-            };
-            reader.onerror = () => {
-              reject(new Error('Failed to read image file.'));
-            };
-          });
-        })
-      );
+      const promises = [];
+      for (const file of files) {
+        promises.push(storeImage(file));
+      }
+      const urls = await Promise.all(promises);
 
       setFormData((prev) => ({
         ...prev,
-        imageUrls: [...prev.imageUrls, ...base64Urls],
+        imageUrls: [...prev.imageUrls, ...urls],
       }));
     } catch (error) {
       console.error('Upload Error:', error);
-      setImageUploadError(error.message);
+      setImageUploadError('Failed to upload images. Please try again.');
     } finally {
       setUploading(false);
     }
@@ -342,7 +360,7 @@ export default function CreateListing() {
                 className="flex justify-between p-3 bg-gray-800 rounded-lg items-center"
               >
                 <img
-                  src={url} // Use the Base64 URL directly
+                  src={url} // Now this is a Firebase URL
                   alt="listing image"
                   className="w-20 h-20 object-cover rounded-lg"
                 />

@@ -209,11 +209,20 @@ export const getListing = async (req, res, next) => {
 // @desc    Get all listings with search, filter and pagination
 // @route   GET /api/listings
 // @access  Public
+// @desc    Get all listings with search, filter and pagination
+// @route   GET /api/listings
+// @access  Public
 export const getListings = async (req, res, next) => {
   try {
-    // Parse query parameters with defaults
-    const limit = parseInt(req.query.limit) || 9;
-    const startIndex = parseInt(req.query.startIndex) || 0;
+    // Parse query parameters with protection
+    const limit = Math.min(
+      parseInt(req.query.limit) || 9,
+      50 // Maximum 50 items per request
+    );
+    const startIndex = Math.max(
+      parseInt(req.query.startIndex) || 0,
+      0 // Minimum 0
+    );
     const searchTerm = req.query.searchTerm || '';
     const type = req.query.type || 'all';
     const parking = req.query.parking === 'true';
@@ -252,7 +261,7 @@ export const getListings = async (req, res, next) => {
       sortOptions[sort] = order === 'desc' ? -1 : 1;
     }
 
-    // Execute query
+    // Execute query with protection
     const listings = await Listing.find(query)
       .sort(sortOptions)
       .skip(startIndex)

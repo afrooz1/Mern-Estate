@@ -24,8 +24,15 @@ export const signin = async (req, res, next) => {
     if (!validPassword) return next(errorHandler(401, 'Wrong credentials!'));
     const token = jwt.sign({ id: validUser._id }, process.env.JWT_SECRET);
     const { password: pass, ...rest } = validUser._doc;
+    
+    // Secure cookie with proper settings
     res
-      .cookie('access_token', token, { httpOnly: true })
+      .cookie('access_token', token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'strict',
+        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+      })
       .status(200)
       .json(rest);
   } catch (error) {
@@ -40,7 +47,12 @@ export const google = async (req, res, next) => {
       const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET);
       const { password: pass, ...rest } = user._doc;
       res
-        .cookie('access_token', token, { httpOnly: true })
+        .cookie('access_token', token, {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === 'production',
+          sameSite: 'strict',
+          maxAge: 7 * 24 * 60 * 60 * 1000,
+        })
         .status(200)
         .json(rest);
     } else {
@@ -60,7 +72,12 @@ export const google = async (req, res, next) => {
       const token = jwt.sign({ id: newUser._id }, process.env.JWT_SECRET);
       const { password: pass, ...rest } = newUser._doc;
       res
-        .cookie('access_token', token, { httpOnly: true })
+        .cookie('access_token', token, {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === 'production',
+          sameSite: 'strict',
+          maxAge: 7 * 24 * 60 * 60 * 1000,
+        })
         .status(200)
         .json(rest);
     }
@@ -71,7 +88,11 @@ export const google = async (req, res, next) => {
 
 export const signOut = async (req, res, next) => {
   try {
-    res.clearCookie('access_token');
+    res.clearCookie('access_token', {
+      httpOnly: true,
+      sameSite: 'strict',
+      secure: process.env.NODE_ENV === 'production',
+    });
     res.status(200).json('User has been logged out!');
   } catch (error) {
     next(error);
